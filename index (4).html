@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en" itemscope itemtype="https://schema.org/SoftwareApplication">
+<head>
+  <meta name="google-site-verification" content="xBdSh16zd_L6N-CdYJQRCap0vq03eIj-KZHkD684Od0" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <title>WFM Operations Command Center | Real-Time Workforce Management Dashboard</title>
+  <meta name="description" content="WFM Operations Command Center — real-time workforce management for call centers. Automates CII reports, staffing schedules, break allocation and analyst task assignment with an intelligent WFM engine." />
+  <meta name="author" content="WFM Operations Team" />
+  <meta name="theme-color" content="#080c10" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Barlow:wght@300;400;500;600;700;900&family=Barlow+Condensed:wght@400;600;700;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+
+  <!-- ======================== LOGIN SCREEN ======================== -->
+  <div id="login-screen" class="login-screen">
+    <div class="login-box">
+      <div class="login-logo">⬡</div>
+      <div class="login-title">WFM OPERATIONS</div>
+      <div class="login-subtitle">COMMAND CENTER · SECURE ACCESS</div>
+      <div class="login-fields">
+        <div class="login-field-group">
+          <label class="login-label">USERNAME</label>
+          <input type="text" id="username" class="login-input" placeholder="Enter username" autocomplete="username" />
+        </div>
+        <div class="login-field-group">
+          <label class="login-label">PASSWORD</label>
+          <input type="password" id="password" class="login-input" placeholder="Enter password"
+            autocomplete="current-password" onkeydown="if(event.key==='Enter')loginFromForm()" />
+        </div>
+        <div id="login-error" class="login-error hidden">⚠ Invalid credentials. Try again.</div>
+        <button class="login-btn" onclick="loginFromForm()">AUTHENTICATE →</button>
+      </div>
+      <div class="login-hint">
+        <span class="login-hint-row"><span class="login-hint-role admin-role">Admin:</span> abdul</span>
+        <span class="login-hint-row"><span class="login-hint-role analyst-role">Analysts:</span> asad, chandan, satyam, gaurav</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======================== MAIN APP ======================== -->
+  <div id="app-shell" class="hidden">
+
+    <!-- HEADER -->
+    <header class="header" role="banner">
+      <div class="header-left">
+        <div class="logo-mark" aria-hidden="true">⬡</div>
+        <div class="header-titles">
+          <h1 class="main-title">WFM OPERATIONS</h1>
+          <span class="sub-title">COMMAND CENTER · LIVE FLOOR MONITOR</span>
+        </div>
+      </div>
+      <div class="header-center">
+        <div class="live-badge" role="status"><span class="live-dot"></span>LIVE</div>
+        <div class="clock-block">
+          <div id="live-clock" class="live-clock">--:--:--</div>
+          <div id="live-date" class="live-date">---</div>
+        </div>
+      </div>
+      <div class="header-right">
+        <div class="shift-indicator">
+          <span class="shift-label">SHIFT ZONE</span>
+          <span id="shift-zone-value" class="shift-zone-value">--</span>
+        </div>
+        <div class="user-badge" id="user-badge">
+          <span class="user-badge-name" id="user-badge-name">--</span>
+          <span class="user-badge-role" id="user-badge-role">--</span>
+        </div>
+        <button class="btn-mgr admin-only" onclick="openAnalystManager()">⚙ ANALYSTS</button>
+        <button class="btn-refresh" onclick="refreshAll()">↺ REFRESH</button>
+        <button class="btn-logout" onclick="doLogout()">⏻ LOGOUT</button>
+      </div>
+    </header>
+
+    <!-- WEEKEND BANNER -->
+    <div id="weekend-banner" class="weekend-banner hidden" role="alert">
+      <span>⚡ WEEKEND MODE ACTIVE</span>
+      <span id="weekend-mode-text"></span>
+    </div>
+
+    <!-- NAV TABS -->
+    <nav class="nav-tabs" role="navigation" aria-label="Dashboard sections">
+      <button class="tab-btn active" onclick="showTab('dashboard')">📊 Dashboard</button>
+      <button class="tab-btn" onclick="showTab('schedule')">📋 Schedule</button>
+      <button class="tab-btn admin-only" onclick="showTab('pto')">🏖 PTO Control</button>
+      <button class="tab-btn admin-only" onclick="showTab('breaks')">☕ Breaks</button>
+      <button class="tab-btn" onclick="showTab('errors')">⚠ Error Log</button>
+      <button class="tab-btn admin-only" onclick="showTab('archive')">🗄 Archive</button>
+      <button class="tab-btn" onclick="showTab('about')">ℹ About</button>
+    </nav>
+
+    <!-- ======================== DASHBOARD TAB ======================== -->
+    <div id="tab-dashboard" class="tab-content active" role="main">
+      <div class="kpi-row" role="region" aria-label="Key performance indicators">
+        <div class="kpi-card" id="kpi-cii">
+          <div class="kpi-icon">📡</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-cii-val">--%</div>
+            <div class="kpi-label">CII Compliance</div>
+            <div class="kpi-sub" id="kpi-cii-sub">0/0 intervals</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill" id="kpi-cii-fill" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card" id="kpi-status">
+          <div class="kpi-icon">📋</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-status-val">--%</div>
+            <div class="kpi-label">Status Compliance</div>
+            <div class="kpi-sub" id="kpi-status-sub">0/0 reports</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill" id="kpi-status-fill" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card" id="kpi-staffing">
+          <div class="kpi-icon">👥</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-staffing-val">0/3</div>
+            <div class="kpi-label">Staffing Reports</div>
+            <div class="kpi-sub">8:30AM · 2:00PM · 5:00PM</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill" id="kpi-staffing-fill" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card" id="kpi-ops">
+          <div class="kpi-icon">🎯</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-ops-val">PENDING</div>
+            <div class="kpi-label">Daily Ops Update</div>
+            <div class="kpi-sub">9:30 AM · Once Daily</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill" id="kpi-ops-fill" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card" id="kpi-eod">
+          <div class="kpi-icon">🌙</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-eod-val">PENDING</div>
+            <div class="kpi-label">EOD Report</div>
+            <div class="kpi-sub">11:30 PM · Last Agent</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill" id="kpi-eod-fill" style="width:0%"></div></div>
+        </div>
+        <div class="kpi-card kpi-errors" id="kpi-err">
+          <div class="kpi-icon">⚠</div>
+          <div class="kpi-data">
+            <div class="kpi-value" id="kpi-err-val">0</div>
+            <div class="kpi-label">Total Errors</div>
+            <div class="kpi-sub" id="kpi-err-sub">No issues</div>
+          </div>
+          <div class="kpi-bar"><div class="kpi-fill error-fill" id="kpi-err-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <!-- AI INSIGHTS PANEL -->
+      <section class="panel ai-insights-panel" aria-label="AI Insights">
+        <div class="panel-header">
+          <span class="panel-title">🧠 AI INSIGHTS</span>
+          <span class="panel-badge ai-badge" id="ai-rec-count">SCANNING…</span>
+        </div>
+        <div class="ai-insights-body" id="ai-insights-body">
+          <div class="ai-scanning">⬡ Analyzing operations…</div>
+        </div>
+      </section>
+
+      <!-- ANALYTICS ROW -->
+      <div class="analytics-row">
+        <div class="analytic-card">
+          <div class="analytic-label">EFFICIENCY SCORE</div>
+          <div class="analytic-value" id="analytic-efficiency">--%</div>
+          <div class="analytic-sub" id="analytic-efficiency-sub">calculating…</div>
+        </div>
+        <div class="analytic-card analytic-risk">
+          <div class="analytic-label">SLA AT RISK</div>
+          <div class="analytic-value" id="analytic-sla">0</div>
+          <div class="analytic-sub" id="analytic-sla-sub">tasks near deadline</div>
+        </div>
+        <div class="analytic-card">
+          <div class="analytic-label">REASSIGNMENTS</div>
+          <div class="analytic-value" id="analytic-reassign">0</div>
+          <div class="analytic-sub">auto-rebalanced today</div>
+        </div>
+        <div class="analytic-card">
+          <div class="analytic-label">BACKUP USAGE</div>
+          <div class="analytic-value" id="analytic-backup">0</div>
+          <div class="analytic-sub">tasks covered by backup</div>
+        </div>
+      </div>
+
+      <div class="main-grid">
+        <section class="panel agent-panel" aria-label="Agent status">
+          <div class="panel-header">
+            <span class="panel-title">AGENT STATUS</span>
+            <span class="panel-badge" id="active-count-badge">0 ACTIVE</span>
+          </div>
+          <div class="agent-cards" id="agent-cards-container"></div>
+        </section>
+        <section class="panel timeline-panel" aria-label="Task timeline">
+          <div class="panel-header">
+            <span class="panel-title">LIVE TASK TIMELINE</span>
+            <span class="panel-badge" id="upcoming-badge">UPCOMING</span>
+          </div>
+          <div class="timeline-scroll" id="timeline-container"></div>
+        </section>
+        <section class="panel chart-panel" aria-label="Task distribution">
+          <div class="panel-header">
+            <span class="panel-title">TASKS BY ANALYST</span>
+            <span class="panel-badge">TODAY</span>
+          </div>
+          <div class="chart-area" id="chart-area"></div>
+        </section>
+        <section class="panel current-tasks-panel" aria-label="Current tasks">
+          <div class="panel-header">
+            <span class="panel-title">CURRENT INTERVAL TASKS</span>
+            <span id="current-interval-badge" class="panel-badge">--:--</span>
+          </div>
+          <div id="current-tasks-list" class="current-tasks-list"></div>
+        </section>
+      </div>
+    </div>
+
+    <!-- ======================== SCHEDULE TAB ======================== -->
+    <div id="tab-schedule" class="tab-content">
+      <div class="schedule-controls">
+        <label class="ctrl-label">VIEW DATE:</label>
+        <input type="date" id="schedule-date" class="ctrl-input" onchange="renderSchedule()" />
+        <label class="ctrl-label">FILTER ANALYST:</label>
+        <select id="schedule-analyst-filter" class="ctrl-select" onchange="renderSchedule()">
+          <option value="all">All Analysts</option>
+        </select>
+        <label class="ctrl-label">FILTER TASK:</label>
+        <select id="schedule-task-filter" class="ctrl-select" onchange="renderSchedule()">
+          <option value="all">All Tasks</option>
+          <option value="CII Report">CII Report</option>
+          <option value="Status Report">Status Report</option>
+          <option value="Staffing Report">Staffing Report</option>
+          <option value="Daily Ops Update">Daily Ops Update</option>
+          <option value="EOD Report">EOD Report</option>
+          <option value="Email Handling">Email Handling</option>
+          <option value="Audit Queue">Audit Queue</option>
+          <option value="Briefing File Update">Briefing File Update</option>
+        </select>
+        <button class="btn-secondary admin-only" onclick="openAddTaskModal()" style="margin-left:auto">➕ ADD TASK</button>
+      </div>
+      <div class="schedule-table-wrap">
+        <table class="schedule-table" id="schedule-table">
+          <thead>
+            <tr>
+              <th>TIME</th><th>TASK</th><th>PLANNED OWNER</th><th>ACTUAL OWNER</th>
+              <th>STATUS</th><th>ERROR</th><th>ERROR TYPE</th><th>NOTES</th><th>ACTIONS</th>
+            </tr>
+          </thead>
+          <tbody id="schedule-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================== PTO CONTROL TAB ======================== -->
+    <div id="tab-pto" class="tab-content">
+      <div class="pto-grid" id="pto-grid"></div>
+      <div class="pto-impact-panel panel">
+        <div class="panel-header"><span class="panel-title">PTO IMPACT ANALYSIS</span></div>
+        <div id="pto-impact-content" class="pto-impact-content"></div>
+      </div>
+    </div>
+
+    <!-- ======================== BREAKS TAB ======================== -->
+    <div id="tab-breaks" class="tab-content">
+      <div class="breaks-header-row">
+        <div class="panel break-rules-panel">
+          <div class="panel-header"><span class="panel-title">BREAK RULES</span></div>
+          <ul class="break-rules-list">
+            <li>✅ Lunch break: <strong>60 minutes</strong> — shift midpoint</li>
+            <li>✅ Short break: <strong>30 minutes</strong> — ~2h before lunch</li>
+            <li>✅ No overlap allowed across team</li>
+            <li>✅ Backup auto-assigned during breaks</li>
+            <li>✅ Coverage ≥ 1 analyst guaranteed</li>
+            <li>✅ Admin can override break times per analyst</li>
+          </ul>
+        </div>
+        <div class="panel break-coverage-panel">
+          <div class="panel-header"><span class="panel-title">CURRENT COVERAGE</span></div>
+          <div id="coverage-status" class="coverage-status"></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-header">
+          <span class="panel-title">BREAK SCHEDULE</span>
+          <button class="btn-small admin-only" onclick="resetAllBreaks()" style="margin-left:auto;margin-right:12px">↺ RESET ALL</button>
+        </div>
+        <div id="break-schedule-grid" class="break-schedule-grid"></div>
+      </div>
+    </div>
+
+    <!-- ======================== ERROR LOG TAB ======================== -->
+    <div id="tab-errors" class="tab-content">
+      <div class="error-controls">
+        <button class="btn-primary admin-only" onclick="openAddErrorModal()">⚡ LOG ERROR</button>
+        <button class="btn-secondary admin-only" onclick="openAddEmailErrorModal()" style="margin-left:4px">+ EMAIL ERROR</button>
+        <div class="error-summary" id="error-summary"></div>
+      </div>
+
+      <!-- Error Command Center (admin only) -->
+      <div class="panel admin-only" style="margin-bottom:16px">
+        <div class="panel-header">
+          <span class="panel-title">⚡ ERROR COMMAND CENTER</span>
+          <span class="panel-badge" id="error-master-badge" style="background:rgba(255,59,59,0.15);color:var(--danger);border:1px solid var(--danger)">0 OPEN</span>
+        </div>
+        <div id="error-command-body" class="error-command-body"></div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">TASK ERROR LOG</span></div>
+        <table class="error-table">
+          <thead>
+            <tr><th>TIME</th><th>ANALYST</th><th>TASK</th><th>TYPE</th><th>SEV</th><th>DESCRIPTION</th><th>STATUS</th><th>ACTIONS</th></tr>
+          </thead>
+          <tbody id="error-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="panel" style="margin-top:16px">
+        <div class="panel-header"><span class="panel-title">EMAIL ERROR LOG</span></div>
+        <table class="error-table">
+          <thead>
+            <tr><th>TIME</th><th>ANALYST</th><th>ERROR TYPE</th><th>DESCRIPTION</th><th>ACTIONS</th></tr>
+          </thead>
+          <tbody id="email-error-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- ======================== ARCHIVE TAB ======================== -->
+    <div id="tab-archive" class="tab-content">
+      <div class="archive-controls">
+        <button class="btn-primary admin-only" onclick="archiveToday()">📦 ARCHIVE TODAY</button>
+        <button class="btn-secondary admin-only" onclick="undoArchive()">↩ UNDO ARCHIVE</button>
+        <button class="btn-secondary" onclick="exportArchive()">⬇ EXPORT CSV</button>
+        <input type="date" id="archive-filter-date" class="ctrl-input" onchange="renderArchive()" />
+        <span class="panel-badge" id="archive-badge" style="margin-left:auto">0 RECORDS</span>
+      </div>
+      <div class="panel">
+        <div class="panel-header"><span class="panel-title">ARCHIVE TABLE</span></div>
+        <div class="archive-table-wrap">
+          <table class="archive-table">
+            <thead>
+              <tr>
+                <th>DATE</th><th>DAY</th><th>SHIFT BUCKET</th><th>INTERVAL</th><th>TASK</th>
+                <th>PLANNED OWNER</th><th>ACTUAL OWNER</th><th>STATUS</th><th>ERROR</th><th>ERROR TYPE</th>
+              </tr>
+            </thead>
+            <tbody id="archive-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== ABOUT TAB ======================== -->
+    <div id="tab-about" class="tab-content">
+      <div style="max-width:900px;margin:0 auto">
+        <div class="seo-section">
+          <h2>WFM Operations Command Center</h2>
+          <p><strong>WFM (Workforce Management)</strong> is the process of forecasting, scheduling, and optimizing workforce operations in real-time. This tool automates the full intraday WFM workflow for Real-Time Analyst (RTA) teams.</p>
+          <p>All logic runs in the browser — no server, no database, no installation. Open <code>index.html</code> and your command center is live.</p>
+        </div>
+        <div class="seo-section">
+          <h2>Role Permissions</h2>
+          <div class="seo-feature-grid">
+            <div class="seo-feature-card">
+              <div class="feature-icon">🔐</div>
+              <div class="feature-title">ADMIN</div>
+              <div class="feature-desc">Full control: add/edit/delete tasks, manage breaks with overrides, log &amp; escalate errors, archive &amp; undo, PTO control, analyst management.</div>
+            </div>
+            <div class="seo-feature-card">
+              <div class="feature-icon">👤</div>
+              <div class="feature-title">ANALYST</div>
+              <div class="feature-desc">Read access + one permission: mark assigned tasks as DONE. Admin tabs (PTO, Breaks, Archive) are hidden. All destructive actions are blocked.</div>
+            </div>
+            <div class="seo-feature-card">
+              <div class="feature-icon">🧠</div>
+              <div class="feature-title">AI ENGINE</div>
+              <div class="feature-desc">Runs every 5s: auto-reassigns overloaded/inactive tasks, generates insights, calculates SLA risk and efficiency scores.</div>
+            </div>
+          </div>
+        </div>
+        <div class="seo-section">
+          <h2>Frequently Asked Questions</h2>
+          <div class="seo-faq-item">
+            <div class="seo-faq-q" onclick="toggleFaq(this)">What is WFM? <span>▾</span></div>
+            <div class="seo-faq-a">WFM is the process of forecasting, scheduling, and optimizing workforce in real-time. In call centers: intraday scheduling, break management, task routing, adherence tracking, SLA compliance.</div>
+          </div>
+          <div class="seo-faq-item">
+            <div class="seo-faq-q" onclick="toggleFaq(this)">How does login work? <span>▾</span></div>
+            <div class="seo-faq-a">Frontend credential check — no server. Sessions persist in localStorage so you stay logged in across refreshes. Admin: full control. Analyst: mark tasks done only.</div>
+          </div>
+          <div class="seo-faq-item">
+            <div class="seo-faq-q" onclick="toggleFaq(this)">Does this require a backend? <span>▾</span></div>
+            <div class="seo-faq-a">No. Fully static. All logic runs in the browser via JavaScript. Data persists via <code>localStorage</code>. Works completely offline.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== MODALS ======================== -->
+    <div id="modal-overlay" class="modal-overlay hidden" onclick="closeAllModals()"></div>
+
+    <!-- Log Error Modal -->
+    <div id="modal-error" class="modal hidden">
+      <div class="modal-header"><span>⚡ LOG ERROR</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <label>Analyst</label>
+        <select id="err-analyst" class="ctrl-select"></select>
+        <label>Task</label>
+        <select id="err-task" class="ctrl-select">
+          <option>CII Report</option><option>Status Report</option><option>Staffing Report</option>
+          <option>Daily Ops Update</option><option>EOD Report</option><option>Email Handling</option>
+          <option>Audit Queue</option><option>Briefing File Update</option><option>Other</option>
+        </select>
+        <label>Error Type</label>
+        <select id="err-type" class="ctrl-select">
+          <option>Delay</option><option>Missed</option><option>SLA Risk</option>
+          <option>AHT Spike</option><option>Wrong Data</option><option>Skilling Issue</option>
+        </select>
+        <label>Severity</label>
+        <select id="err-severity" class="ctrl-select">
+          <option value="low">Low</option><option value="medium" selected>Medium</option>
+          <option value="high">High</option><option value="critical">Critical</option>
+        </select>
+        <label>Description</label>
+        <textarea id="err-desc" class="ctrl-textarea" rows="3"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="submitError()">LOG ERROR</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Email Error Modal -->
+    <div id="modal-email-error" class="modal hidden">
+      <div class="modal-header"><span>LOG EMAIL ERROR</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <label>Analyst</label>
+        <select id="email-err-analyst" class="ctrl-select"></select>
+        <label>Error Type</label>
+        <select id="email-err-type" class="ctrl-select">
+          <option>Delay</option><option>Missed</option><option>SLA Risk</option>
+          <option>AHT Spike</option><option>Wrong Data</option><option>Skilling Issue</option>
+        </select>
+        <label>Description</label>
+        <textarea id="email-err-desc" class="ctrl-textarea" rows="3"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="submitEmailError()">LOG ERROR</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Task Status Modal — role-aware -->
+    <div id="modal-task-status" class="modal hidden">
+      <div class="modal-header"><span id="modal-task-title">UPDATE TASK</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <div id="modal-admin-fields">
+          <label>Actual Owner</label>
+          <select id="modal-actual-owner" class="ctrl-select"></select>
+          <label>Task Type (override)</label>
+          <select id="modal-task-type" class="ctrl-select">
+            <option value="">— no change —</option>
+            <option value="cii">CII Report</option><option value="status">Status Report</option>
+            <option value="staffing">Staffing Report</option><option value="ops">Daily Ops Update</option>
+            <option value="email">Email Handling</option><option value="audit">Audit Queue</option>
+            <option value="briefing">Briefing File Update</option><option value="eod">EOD Report</option>
+          </select>
+        </div>
+        <label>Status</label>
+        <select id="modal-status" class="ctrl-select">
+          <option value="pending">Pending</option><option value="in-progress">In Progress</option>
+          <option value="done">Done</option><option value="missed">Missed</option><option value="delayed">Delayed</option>
+        </select>
+        <div id="modal-admin-error-fields">
+          <label>Error?</label>
+          <select id="modal-has-error" class="ctrl-select">
+            <option value="no">No</option><option value="yes">Yes</option>
+          </select>
+          <div id="modal-error-type-wrap" class="hidden">
+            <label>Error Type</label>
+            <select id="modal-error-type" class="ctrl-select">
+              <option>Delay</option><option>Missed</option><option>SLA Risk</option>
+              <option>AHT Spike</option><option>Wrong Data</option><option>Skilling Issue</option>
+            </select>
+          </div>
+          <label>Notes</label>
+          <textarea id="modal-notes" class="ctrl-textarea" rows="2"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-danger admin-only" onclick="deleteCurrentTask()" style="margin-right:auto">🗑 DELETE</button>
+        <button class="btn-primary" onclick="saveTaskStatus()">SAVE</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Add Task Modal (admin) -->
+    <div id="modal-add-task" class="modal hidden">
+      <div class="modal-header"><span>➕ ADD TASK</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <label>Time (HH:MM)</label>
+        <input type="time" id="add-task-time" class="ctrl-input" />
+        <label>Task Name</label>
+        <input type="text" id="add-task-name" class="ctrl-input" placeholder="e.g. Ad-hoc CII Check" />
+        <label>Task Type</label>
+        <select id="add-task-type" class="ctrl-select">
+          <option value="cii">CII Report</option><option value="status">Status Report</option>
+          <option value="staffing">Staffing Report</option><option value="ops">Daily Ops Update</option>
+          <option value="email">Email Handling</option><option value="audit">Audit Queue</option>
+          <option value="briefing">Briefing File Update</option><option value="eod">EOD Report</option>
+        </select>
+        <label>Assign To</label>
+        <select id="add-task-owner" class="ctrl-select"></select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="submitAddTask()">ADD TASK</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Break Override Modal (admin) -->
+    <div id="modal-break-edit" class="modal hidden">
+      <div class="modal-header"><span id="break-edit-title">EDIT BREAK</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="break-edit-analyst-id" />
+        <input type="hidden" id="break-edit-type" />
+        <label>New Start Time</label>
+        <input type="time" id="break-edit-start" class="ctrl-input" />
+        <label>New End Time</label>
+        <input type="time" id="break-edit-end" class="ctrl-input" />
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="resetBreakOverride()" style="margin-right:auto">↺ RESET DEFAULT</button>
+        <button class="btn-primary" onclick="saveBreakOverride()">SAVE OVERRIDE</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Analyst Manager Modal -->
+    <div id="modal-analyst-mgr" class="modal hidden" style="width:600px;max-width:98vw">
+      <div class="modal-header"><span>⚙ ANALYST MANAGER</span><button onclick="closeAnalystManager()">✕</button></div>
+      <div class="modal-body" id="analyst-mgr-body" style="gap:0;max-height:440px;overflow-y:auto;padding:0"></div>
+      <div class="modal-footer">
+        <button class="btn-secondary" onclick="addNewAnalyst()">+ ADD ANALYST</button>
+        <button class="btn-primary" onclick="closeAnalystManager()" style="margin-left:auto">APPLY &amp; RECALCULATE</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+    <!-- Escalate Error Modal -->
+    <div id="modal-escalate" class="modal hidden">
+      <div class="modal-header"><span>⬆ ESCALATE ERROR</span><button onclick="closeAllModals()">✕</button></div>
+      <div class="modal-body">
+        <input type="hidden" id="escalate-error-id" />
+        <label>Escalation Note</label>
+        <textarea id="escalate-note" class="ctrl-textarea" rows="3" placeholder="Describe escalation reason…"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-primary" onclick="submitEscalation()">ESCALATE</button>
+        <button class="btn-secondary" onclick="closeAllModals()">CANCEL</button>
+      </div>
+    </div>
+
+  </div><!-- /app-shell -->
+
+  <script>
+    function toggleFaq(el) {
+      const a = el.nextElementSibling;
+      const open = a.classList.contains("open");
+      document.querySelectorAll(".seo-faq-a").forEach(x => x.classList.remove("open"));
+      if (!open) a.classList.add("open");
+    }
+  </script>
+  <script src="script.js"></script>
+</body>
+</html>
