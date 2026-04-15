@@ -17,7 +17,7 @@ const USERS = [
   { username: "chandan", password: "2222", role: "analyst" },
   { username: "satyam",  password: "3333", role: "analyst" },
   { username: "gaurav",  password: "4444", role: "analyst" },
-  { username: "ritesh",  password: "5555", role: "analyst" },
+  { username: "agrima",  password: "5555", role: "analyst" },
   { username: "dennis",  password: "6666", role: "analyst" },
   { username: "sasha",   password: "7777", role: "analyst" },
   { username: "bobby",   password: "8888", role: "analyst" }
